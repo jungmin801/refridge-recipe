@@ -1,0 +1,175 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
+
+.main{
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    background-color:var(--background-color);
+}
+
+h3,div, p{
+    padding: 0;
+    margin: 0;
+}
+
+article{
+    width: 420px;
+    background-color: var(--white-color);
+    box-shadow: 0px 0px 20px #cecece
+
+
+}
+
+section{
+    display: flex;
+    flex-direction: column;
+    height: calc(100% - 56px);
+}
+
+.brand{
+    font-weight: 600;
+}
+
+.search-container{
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: calc(var(--margin)*0.8) 0;
+}
+
+.search-area{
+    width: 360px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.input-area{
+    width: 100%;
+    margin-bottom: var(--margin);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.input-area input{
+    width: 100%;
+    padding: 3px var(--padding);
+    border-radius: 10px;
+    background-color: var(--gray-light-color);
+    position: relative;
+    padding-inline-start: calc(var(--padding)*1.5);
+    outline: none;
+    border: none;
+}
+
+.search-icon{
+    position: absolute;
+    margin-left:calc(var(--margin)*25);
+    color: var(--gray-dark-color);
+}
+
+.ingredients-area{
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.ingredients-box{
+    background-color: var(--orange-color);
+    padding: 3px 10px;
+    border-radius: 15px;
+    color: var(--white-color);
+    font-size: var(--font-small);
+    margin-right: calc(var(--margin)/3);
+}
+
+.delete-icon{
+    padding-left: 5px;
+}
+
+.result-area{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    box-sizing: border-box;
+    height: 100%;
+}
+
+.add-icon{
+    font-size: 100px;
+    margin: var(--margin);
+}
+
+
+.face-icon{
+    font-size: 100px;
+    text-align: center;
+}
+
+.render-recipe{
+    height: fit-content;
+    overflow: auto;
+}
+
+
+.result-area button{
+    margin-top: var(--margin);
+    padding: calc(var(--padding)/2) calc(var(--padding)*2);
+    background-color: var(--orange-color);
+    color: var(--white-color);
+    border: none;
+    border-radius: 10px;
+}
+
+.result-container{
+    display: flex; 
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+
+.recipe-container{
+    border-top: 1px solid var(--gray-med-color);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+
+.result-image{
+    max-width: 100%;
+}
+
+.recipe-title{
+    font-size: var(--font-large);
+    font-weight: bold;
+    }
+
+.recipe-details{
+    font-size: var(--font-small);
+    font-weight: 400;
+}
+
+.recipe-box1{
+    display: flex;
+    align-items: center;
+}
+
+.recipe-box2{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.recipe-etc>span{
+    padding-right: var(--padding);
+    font-size: var(--font-small);
+}
