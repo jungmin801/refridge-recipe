@@ -19,7 +19,7 @@ function Main() {
 
   const callAPI = () =>{
     let apikey = '20cb511a2c2044259d0e';
-          axios.get(`http://openapi.foodsafetykorea.go.kr/api/${apikey}/COOKRCP01/json/1/10`)
+          axios.get(`http://openapi.foodsafetykorea.go.kr/api/${apikey}/COOKRCP01/json/1/100`)
           .then((result)=>{
             let data = result.data.COOKRCP01.row
             setResults(data);
@@ -31,20 +31,31 @@ function Main() {
 
 
   const findRecipe = () => {
-    let copy = [...recipe];
+    let copy = [];
 
     for(let i=0; i<ingredients.length; i++){
       let filtered = results.filter((value)=>
         value.RCP_PARTS_DTLS.includes(ingredients[i])
       )
-      copy.push(...filtered);
-      setRecipe(copy);
+
+      filtered.forEach((item) => {
+        if (!copy.some((existingItem) => existingItem.RCP_SEQ === item.RCP_SEQ)) {
+          copy.push(item);
+        }
+      });
     }
+    setRecipe(copy);
     };
 
   useEffect(()=>{
     findRecipe()
   },[results])
+
+  useEffect(()=>{
+    findRecipe();
+    console.log(recipe)
+  },[ingredients])
+
 
   const addIngredients = () => {
     if (ingredients.length > 4) {
@@ -185,7 +196,7 @@ function Results(props) {
                 />
               </Col>
               <Col sm={8} className="recipe-box2">
-                <h3 className="recipe-title">{props.results[i].RCP_NM}</h3>
+                <h3 className="recipe-title">{props.recipe[i].RCP_NM}</h3>
                 <p className="recipe-details">
                   {shortenWords(props.recipe[i].RCP_PARTS_DTLS)}
                 </p>
