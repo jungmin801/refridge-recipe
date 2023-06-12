@@ -2,6 +2,7 @@ import Container from "react-bootstrap/Container";
 import Navbar from "react-bootstrap/Navbar";
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
+import Pagination from 'react-bootstrap/Pagination';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars, faPlus, faXmark, faMagnifyingGlass, faUtensils, faFire} from "@fortawesome/free-solid-svg-icons";
 import { useEffect, useState } from "react";
@@ -15,14 +16,16 @@ function Main() {
   let [input, setInput] = useState("");
   let [results, setResults] = useState([]);
   let [recipe, setRecipe] = useState([]);
-
+  let [loading, setLoading] = useState(false);
 
   const callAPI = () =>{
-    let apikey = '20cb511a2c2044259d0e';
+      setLoading(true);
+      let apikey = '20cb511a2c2044259d0e';
           axios.get(`http://openapi.foodsafetykorea.go.kr/api/${apikey}/COOKRCP01/json/1/100`)
           .then((result)=>{
             let data = result.data.COOKRCP01.row
             setResults(data);
+            setLoading(false);
           })
           .catch(()=>{
             console.log('Fail')
@@ -48,13 +51,8 @@ function Main() {
     };
 
   useEffect(()=>{
-    findRecipe()
-  },[results])
-
-  useEffect(()=>{
     findRecipe();
-    console.log(recipe)
-  },[ingredients])
+  },[results, ingredients])
 
 
   const addIngredients = () => {
@@ -73,9 +71,6 @@ function Main() {
       addIngredients()
     }
   };
-
-
-
 
   return (
     <main className="main">
@@ -130,7 +125,8 @@ function Main() {
           </div>
 
             {
-              Object.keys(results).length > 0? <Results results={results} recipe={recipe} /> : 
+              loading ? <Loading/> :
+              Object.keys(results).length > 0? <Results results={results} recipe={recipe} loading={loading} setLoading={setLoading}/> : 
               ingredients.length > 0 ? <After callAPI={()=>{
                 callAPI()
               }}/> : <Before/> 
@@ -161,7 +157,7 @@ function After(props){
       <div className="result-container">
         <div className="face-icon">😋</div>
         <div style={{fontWeight:'bold'}}>이제 레시피를 찾아볼까요?</div>
-        <button onClick={()=>{
+        <button disabled={props.loading} onClick={()=>{
           props.callAPI()
         }}
         >Search</button>
@@ -170,7 +166,24 @@ function After(props){
   );
 }
 
+function Loading(){
+  return(
+    <div className="result-area" >
+      <div className="result-container">
+        <div className="face-icon">🔍</div>
+        <div style={{fontWeight:'bold'}}>레시피를 검색하고 있습니다</div>
+      </div>
+      </div>)
+}
+
 function Results(props) {
+
+  const [currentPage, SetCurrentPage] = useState(1) // 현재 페이지
+    const [itemPerPage] = useState(10) // 한 페이지에 보여줄 아이템 개수
+    const totalPage = Math.ceil(props.recipe.length/ itemPerPage); // 전체 페이지 개수
+    const startIndex = (currentPage-1) * itemPerPage; 
+    const endIndex = startIndex + itemPerPage;
+    const currentData = props.recipe.slice(startIndex, endIndex);
 
   const shortenWords = (str, length = 90) => {
     let description = '';
@@ -185,20 +198,20 @@ function Results(props) {
 
   return (
     <div className="render-recipe">
-      {props.recipe.map((item, i) => {
+      {currentData.map((item, i) => {
         return (
           <Container className="recipe-container" key={i}>
             <Row style={{ padding: "5px 0" }}>
               <Col sm={4} className="recipe-box1">
                 <img
-                  src={props.recipe[i].ATT_FILE_NO_MAIN}
+                  src={currentData[i].ATT_FILE_NO_MAIN}
                   className="result-image"
                 />
               </Col>
               <Col sm={8} className="recipe-box2">
-                <h3 className="recipe-title">{props.recipe[i].RCP_NM}</h3>
+                <h3 className="recipe-title">{currentData[i].RCP_NM}</h3>
                 <p className="recipe-details">
-                  {shortenWords(props.recipe[i].RCP_PARTS_DTLS)}
+                  {shortenWords(currentData[i].RCP_PARTS_DTLS)}
                 </p>
                 <p className="recipe-etc">
                   <span>
@@ -206,14 +219,14 @@ function Results(props) {
                       icon={faUtensils}
                       style={{ marginRight: "6px" }}
                     />
-                    {props.recipe[i].RCP_PAT2}
+                    {currentData[i].RCP_PAT2}
                   </span>
                   <span>
                     <FontAwesomeIcon
                       icon={faFire}
                       style={{ marginRight: "6px" }}
                     />
-                    {`${props.recipe[i].INFO_ENG}Kcal`}
+                    {`${currentData[i].INFO_ENG}Kcal`}
                   </span>
                 </p>
               </Col>
@@ -221,39 +234,56 @@ function Results(props) {
           </Container>
         );
       })}
-
-      {/* <nav aria-label="Page navigation example">
-        <ul class="pagination">
-          <li class="page-item">
-            <a class="page-link" href="#" aria-label="Previous">
-              <span aria-hidden="true">&laquo;</span>
-            </a>
-          </li>
-          <li class="page-item">
-            <a class="page-link" href="#">
-              1
-            </a>
-          </li>
-          <li class="page-item">
-            <a class="page-link" href="#">
-              2
-            </a>
-          </li>
-          <li class="page-item">
-            <a class="page-link" href="#">
-              3
-            </a>
-          </li>
-          <li class="page-item">
-            <a class="page-link" href="#" aria-label="Next">
-              <span aria-hidden="true">&raquo;</span>
-            </a>
-          </li>
-        </ul>
-      </nav> */}
+      <Pagenation recipe={props.recipe} currentPage={currentPage} SetCurrentPage={SetCurrentPage} itemPerPage={itemPerPage} totalPage={totalPage} startIndex={startIndex} endIndex={endIndex}/>
     </div>
+
   );
 
+}
+
+function Pagenation(props){
+
+  
+    const pageGroup = Math.ceil(props.currentPage / 5);  
+    const firstPage = props.startIndex+1;
+    let lastPage = pageGroup*5;
+      
+    const [pageNum, setPageNum] = useState([]);
+
+    useEffect(()=>{
+      let item = [];
+      if(lastPage > props.totalPage) {
+        lastPage = props.totalPage;
+      }
+      for(let i=firstPage; i<=lastPage; i++){
+        item.push(i);
+        setPageNum(item);
+      }
+    },[props.recipe])
+
+    const handleClick = (number) => {
+      props.SetCurrentPage(number)
+    }
+
+
+  return(
+    <Pagination className="pagenation">
+      {
+        pageGroup > 1 ? <><Pagination.First/><Pagination.Prev /></>: null
+      }
+      
+      {
+        pageNum.map((number)=>{
+          return(<Pagination.Item key={number} onClick={()=>{handleClick(number)}} active={number === props.currentPage}>{number}</Pagination.Item>)
+        })
+      }
+
+      {
+        lastPage < props.totalPage ? <><Pagination.Next /><Pagination.Last /></>: null
+      }
+      
+    </Pagination>
+  )
 }
 
 export default Main;
