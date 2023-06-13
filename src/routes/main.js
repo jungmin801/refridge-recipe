@@ -17,11 +17,12 @@ function Main() {
   let [results, setResults] = useState([]);
   let [recipe, setRecipe] = useState([]);
   let [loading, setLoading] = useState(false);
+  let [showBefore, setShowBefore] = useState(false);
 
   const callAPI = () =>{
       setLoading(true);
       let apikey = '20cb511a2c2044259d0e';
-          axios.get(`http://openapi.foodsafetykorea.go.kr/api/${apikey}/COOKRCP01/json/1/100`)
+          axios.get(`http://openapi.foodsafetykorea.go.kr/api/${apikey}/COOKRCP01/json/1/500`)
           .then((result)=>{
             let data = result.data.COOKRCP01.row
             setResults(data);
@@ -72,6 +73,16 @@ function Main() {
     }
   };
 
+  useEffect(() => {
+    if (ingredients.length === 0) {
+      setShowBefore(true);
+    } else {
+      setShowBefore(false);
+    }
+  }, [ingredients]);
+
+  console.log(showBefore);
+
   return (
     <main className="main">
       <article>
@@ -99,12 +110,12 @@ function Main() {
                     setInput(e.target.value);
                   }}
                   onKeyDown={handleKeyPress}
-                  value={ input }
+                  value={input}
                 ></input>
                 <FontAwesomeIcon
                   icon={faMagnifyingGlass}
                   className="search-icon"
-                  onClick={ addIngredients }
+                  onClick={addIngredients}
                 />
               </div>
               <div className="ingredients-area">
@@ -112,11 +123,15 @@ function Main() {
                   return (
                     <span className="ingredients-box" key={i}>
                       <span>{ingredients[i]}</span>
-                      <FontAwesomeIcon icon={faXmark} className="delete-icon" onClick={()=>{
-                        let copy = [...ingredients];
-                        copy.splice(i,1);
-                        setIngredients(copy);
-                      }}/>
+                      <FontAwesomeIcon
+                        icon={faXmark}
+                        className="delete-icon"
+                        onClick={() => {
+                          let copy = [...ingredients];
+                          copy.splice(i, 1);
+                          setIngredients(copy);
+                        }}
+                      />
                     </span>
                   );
                 })}
@@ -124,14 +139,23 @@ function Main() {
             </div>
           </div>
 
-            {
-              loading ? <Loading/> :
-              Object.keys(results).length > 0? <Results results={results} recipe={recipe} loading={loading} setLoading={setLoading}/> : 
-              ingredients.length > 0 ? <After callAPI={()=>{
-                callAPI()
-              }}/> : <Before/> 
-            }
-
+          {
+            showBefore ? (
+              <Before />
+            ) : loading ? (
+            <Loading />
+          ) : Object.keys(results).length > 0 ? (
+            <Results
+              results={results}
+              recipe={recipe}
+              loading={loading}
+              setLoading={setLoading}
+              ingredients={ingredients}
+              setIngredients={setIngredients}
+            />
+          ) : (
+            ingredients.length > 0 && <After callAPI={callAPI} />
+          )}
         </section>
       </article>
     </main>
@@ -142,12 +166,12 @@ function Main() {
 
 function Before() {
   return (
-    <div className="result-area" >
+    <div className="result-area">
       <div className="result-container">
         <div className="face-icon">🙄</div>
-        <div style={{fontWeight:'bold'}}>먼저 식재료를 추가해주세요</div>
+        <div style={{ fontWeight: "bold" }}>먼저 식재료를 추가해주세요</div>
       </div>
-      </div>
+    </div>
   );
 }
 
@@ -178,12 +202,12 @@ function Loading(){
 
 function Results(props) {
 
-  const [currentPage, SetCurrentPage] = useState(1) // 현재 페이지
+  const [currentPage, setCurrentPage] = useState(1) // 현재 페이지
     const [itemPerPage] = useState(10) // 한 페이지에 보여줄 아이템 개수
     const totalPage = Math.ceil(props.recipe.length/ itemPerPage); // 전체 페이지 개수
     const startIndex = (currentPage-1) * itemPerPage; 
     const endIndex = startIndex + itemPerPage;
-    const currentData = props.recipe.slice(startIndex, endIndex);
+    const currentData = props.recipe.slice(startIndex, endIndex); // 한 페이지에 보여줄 실제 데이터
 
   const shortenWords = (str, length = 90) => {
     let description = '';
@@ -194,6 +218,11 @@ function Results(props) {
     }
     return description;
   };
+
+  useEffect(()=>{
+      setCurrentPage(1)
+  },[props.ingredients])
+  
 
 
   return (
@@ -234,7 +263,7 @@ function Results(props) {
           </Container>
         );
       })}
-      <Pagenation recipe={props.recipe} currentPage={currentPage} SetCurrentPage={SetCurrentPage} itemPerPage={itemPerPage} totalPage={totalPage} startIndex={startIndex} endIndex={endIndex}/>
+      <Pagenation currentPage={currentPage} setCurrentPage={setCurrentPage}totalPage={totalPage}/>
     </div>
 
   );
@@ -243,45 +272,62 @@ function Results(props) {
 
 function Pagenation(props){
 
-  
-    const pageGroup = Math.ceil(props.currentPage / 5);  
-    const firstPage = props.startIndex+1;
-    let lastPage = pageGroup*5;
-      
-    const [pageNum, setPageNum] = useState([]);
+  const pageGroup = Math.ceil(props.currentPage / 5) // 전체 페이지그룹
+  const endPage = pageGroup * 5;  // 한 화면에서 보여줄 마지막 페이지
+  const startPage = endPage - 4;  // 한 화면에서 보여줄 첫 페이지
 
-    useEffect(()=>{
-      let item = [];
-      if(lastPage > props.totalPage) {
-        lastPage = props.totalPage;
-      }
-      for(let i=firstPage; i<=lastPage; i++){
-        item.push(i);
-        setPageNum(item);
-      }
-    },[props.recipe])
+  // 페이지 변경 이벤트 핸들러
+  const handlePageChange = (pageNumber) => {
+    props.setCurrentPage(pageNumber);
+  };
 
-    const handleClick = (number) => {
-      props.SetCurrentPage(number)
+  // 페이지네이션 컴포넌트 렌더링
+  const renderPagination = () => {
+
+    // 페이지 번호 배열 생성
+    const pageNumbers = [];
+    for (let i = 1; i <= props.totalPage; i++) {
+      pageNumbers.push(i);
     }
+    
+    return (
+      <>
+        {pageNumbers.slice(startPage - 1, endPage).map((pageNumber) => (
+          <Pagination.Item
+            key={pageNumber}
+            onClick={() => handlePageChange(pageNumber)}
+            active={pageNumber === props.currentPage}
+          >
+            {pageNumber}
+            </Pagination.Item>
+        ))}
+      </>
+    );
+  };
 
 
   return(
-    <Pagination className="pagenation">
+    <Pagination className="pagination">
       {
-        pageGroup > 1 ? <><Pagination.First/><Pagination.Prev /></>: null
+        props.currentPage > 5 ? 
+        <>
+          <Pagination.First onClick={()=>{props.setCurrentPage(1)}} />
+          <Pagination.Prev onClick={()=>{props.setCurrentPage(props.currentPage-1)}}/>
+        </>
+        : null
       }
       
-      {
-        pageNum.map((number)=>{
-          return(<Pagination.Item key={number} onClick={()=>{handleClick(number)}} active={number === props.currentPage}>{number}</Pagination.Item>)
-        })
-      }
+      {renderPagination()}
 
       {
-        lastPage < props.totalPage ? <><Pagination.Next /><Pagination.Last /></>: null
+        endPage < props.totalPage ? 
+        <>
+        <Pagination.Next onClick={()=>{props.setCurrentPage(props.currentPage+1)}}/>
+        <Pagination.Last onClick={()=>{props.setCurrentPage(props.totalPage)}}/>
+        </>
+        : null
       }
-      
+        
     </Pagination>
   )
 }

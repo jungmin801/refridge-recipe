@@ -174,7 +174,7 @@ section{
     font-size: var(--font-small);
 }
 
-.pagenation{
+.pagination{
     display: flex;
     justify-content: center;
     margin-top:var(--margin)
